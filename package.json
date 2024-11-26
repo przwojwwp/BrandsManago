@@ -10,6 +10,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@api/idosell": "file:.api/apis/idosell"
+    "@api/idosell": "file:.api/apis/idosell",
+    "dotenv": "^16.4.5"
   }
 }

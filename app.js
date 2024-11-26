@@ -1,7 +1,8 @@
 const axios = require('axios');
+require('dotenv').config();
 
-const API_KEY = 'YXBwbGljYXRpb24xNjpYeHI1K0MrNVRaOXBaY2lEcnpiQzBETUZROUxrRzFFYXZuMkx2L0RHRXZRdXNkcmF5R0Y3ZnhDMW1nejlmVmZP';
-const API_URL = 'https://zooart6.yourtechnicaldomain.com/api/admin/v3/orders/orders';
+const API_KEY = process.env.REACT_APP_API_KEY;
+const API_URL = process.env.REACT_APP_API_URL;
 
 const fetchAllOrders = async () =>
 {
