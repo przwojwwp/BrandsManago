@@ -1,8 +1,10 @@
 const axios = require('axios');
 require('dotenv').config();
+const schedule = require('node-schedule');
 
 const API_KEY = process.env.REACT_APP_API_KEY;
 const API_URL = process.env.REACT_APP_API_URL;
+
 
 const fetchAllOrders = async () =>
 {
@@ -20,25 +22,25 @@ const fetchAllOrders = async () =>
 
     const data = response.data;
 
-    // Tworzymy tablicę dla wszystkich przekształconych zamówień
+    // Tworzenie tablicy dla wszystkich przekształconych zamówień
     const ordersData = data.Results.map(order =>
     {
-      // Pobieramy ID zamówienia
+      // Pobiernie ID zamówienia
       const orderID = order.orderId;
 
-      // Mapujemy produkty do pożądanej struktury
+      // Mapowanie produktów do pożądanej struktury
       const products = order.orderDetails.productsResults.map(product => ({
         productID: product.productId,
         quantity: product.productQuantity,
       }));
 
-      // Sumujemy wartość zamówienia, uwzględniając ilość
+      // Sumowanie wartości zamówienia, uwzględniając ilość
       const orderWorth = order.orderDetails.productsResults.reduce((total, product) =>
       {
         return total + (product.productOrderPriceNet * product.productQuantity);  // Mnożymy cenę przez ilość
       }, 0);
 
-      // Tworzymy obiekt w wymaganym formacie
+      // Tworzenie obiektu w wymaganym formacie
       return {
         orderID: orderID,
         products: products,
@@ -46,12 +48,17 @@ const fetchAllOrders = async () =>
       };
     });
 
-    // Wyświetlamy wynik
+    // Wyświetlanie wyniku
     console.log(JSON.stringify(ordersData, null, 2));  // Formatujemy wynik na czytelny JSON
+    // console.log(data.Results.reverse().slice(0, 1));
   } catch (error)
   {
     console.error('Błąd podczas pobierania zamówień:', error);
   }
 };
 
-fetchAllOrders();
+// Codzienne uruchamianie funkcji w południe
+schedule.scheduleJob('* * * * *', async () =>
+{
+  await fetchAllOrders();
+});

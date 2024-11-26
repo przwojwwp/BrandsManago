@@ -11,6 +11,7 @@
   "description": "",
   "dependencies": {
     "@api/idosell": "file:.api/apis/idosell",
-    "dotenv": "^16.4.5"
+    "dotenv": "^16.4.5",
+    "node-schedule": "^2.1.1"
   }
 }
