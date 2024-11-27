@@ -1,10 +1,13 @@
 const axios = require('axios');
 require('dotenv').config();
 const schedule = require('node-schedule');
+const express = require('express');
+const app = express();
 
 const API_KEY = process.env.REACT_APP_API_KEY;
 const API_URL = process.env.REACT_APP_API_URL;
 
+const ordersStorage = [];
 
 const fetchAllOrders = async () =>
 {
@@ -16,7 +19,7 @@ const fetchAllOrders = async () =>
         'X-API-KEY': API_KEY
       },
       params: {
-        limit: 100,  // Nie wiem czemu bez tego nie działa
+        limit: 10,
       }
     });
 
@@ -48,17 +51,34 @@ const fetchAllOrders = async () =>
       };
     });
 
-    // Wyświetlanie wyniku
-    console.log(JSON.stringify(ordersData, null, 2));  // Formatujemy wynik na czytelny JSON
-    // console.log(data.Results.reverse().slice(0, 1));
+    // Zapisanie zamówień w pamięci
+    ordersStorage.length = 0;
+    ordersStorage.push(...ordersData);
+
+    console.log(data);
+    console.log(data.Results.length);
   } catch (error)
   {
     console.error('Błąd podczas pobierania zamówień:', error);
   }
 };
 
+// app.get('/orders', (_req, res) =>
+// {
+//   res.json(ordersStorage);
+// })
+
+// const PORT = 3000;
+// app.listen(PORT, () =>
+// {
+//   console.log(`Serwer działa na porcie ${PORT}`);
+// })
+
+fetchAllOrders();
+
 // Codzienne uruchamianie funkcji w południe
-schedule.scheduleJob('* * * * *', async () =>
-{
-  await fetchAllOrders();
-});
+// schedule.scheduleJob('0 12 * * *', async () =>
+// {
+//   await fetchAllOrders();
+// });
+
