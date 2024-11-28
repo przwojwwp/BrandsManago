@@ -1,16 +1,30 @@
 const axios = require('axios');
+require('dotenv').config();
 
-const options = {
-  method: 'POST',
-  url: 'https://https//zooart6.yourtechnicaldomain.com/api/admin/v3/orders/orders/api/admin/v3/orders/orders/get',
-  headers: {
-    accept: 'application/json',
-    'content-type': 'application/json',
-    'X-API-KEY': 'YXBwbGljYXRpb24xNjpYeHI1K0MrNVRaOXBaY2lEcnpiQzBETUZROUxrRzFFYXZuMkx2L0RHRXZRdXNkcmF5R0Y3ZnhDMW1nejlmVmZP'
+const API_KEY = process.env.REACT_APP_API_KEY;
+const API_URL = process.env.REACT_APP_API_URL;
+
+const fetchAllOrders = async () =>
+{
+  try
+  {
+    const response = await axios.get(API_URL, {
+      headers: {
+        'accept': 'application/json',
+        'X-API-KEY': API_KEY
+      },
+      params: {
+        ordersSerialNumbers: 194, // jak to usuniemy to jest blad
+      }
+    });
+
+    const data = response.data;
+
+    console.log(data);
+  } catch (error)
+  {
+    console.error('Błąd podczas pobierania zamówień:', error);
   }
-};
+}
 
-axios
-  .request(options)
-  .then(res => console.log(res.data))
-  .catch(err => console.error(err));
+fetchAllOrders();

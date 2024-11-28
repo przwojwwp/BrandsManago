@@ -19,7 +19,7 @@ const fetchAllOrders = async () =>
         'X-API-KEY': API_KEY
       },
       params: {
-        limit: 10,
+        limit: 100,
       }
     });
 
@@ -52,16 +52,22 @@ const fetchAllOrders = async () =>
     });
 
     // Zapisanie zamówień w pamięci
-    ordersStorage.length = 0;
     ordersStorage.push(...ordersData);
 
-    console.log(data);
+    console.log(ordersStorage);
+
+    // console.log(data);
+    console.log(ordersStorage.length);
     console.log(data.Results.length);
+    console.log(data.resultsNumberAll);
   } catch (error)
   {
     console.error('Błąd podczas pobierania zamówień:', error);
   }
 };
+
+fetchAllOrders();
+
 
 // app.get('/orders', (_req, res) =>
 // {
@@ -74,11 +80,8 @@ const fetchAllOrders = async () =>
 //   console.log(`Serwer działa na porcie ${PORT}`);
 // })
 
-fetchAllOrders();
-
-// Codzienne uruchamianie funkcji w południe
+// // Codzienne uruchamianie funkcji w południe
 // schedule.scheduleJob('0 12 * * *', async () =>
 // {
 //   await fetchAllOrders();
 // });
-
