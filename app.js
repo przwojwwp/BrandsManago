@@ -2,7 +2,6 @@ const axios = require('axios');
 require('dotenv').config();
 const schedule = require('node-schedule');
 const express = require('express');
-// const fs = require('fs');
 const app = express();
 const { Parser } = require('json2csv');
 
@@ -70,10 +69,10 @@ const processOrder = (order) =>
 
   const orderWorth = order.orderDetails.productsResults.reduce((total, product) =>
   {
-    const { productOrderPriceNet, productQuantity } = product;
+    const { productOrderPrice, productQuantity } = product;
     const currencyRate = order.orderDetails.payments.orderCurrency.orderCurrencyValue;
 
-    const priceInBaseCurrency = productOrderPriceNet * currencyRate;
+    const priceInBaseCurrency = productOrderPrice * currencyRate;
 
     return total + priceInBaseCurrency * productQuantity;
   }, 0);
@@ -106,9 +105,15 @@ const fetchAllOrders = async () =>
 };
 
 // Funkcja do konwersji ordersStorage na CSV
-const convertOrdersToCSV = () =>
+const convertOrdersToCSV = (orders = null) =>
 {
-  const formattedOrders = ordersStorage.map((order) =>
+  // Jeśli przekazano tablicę zamówień, użyj jej, w przeciwnym razie użyj globalnego ordersStorage
+  const ordersToConvert = orders || ordersStorage;
+
+  // Normalizacja danych do formatu CSV
+  const formattedOrders = Array.isArray(ordersToConvert) ? ordersToConvert : [ordersToConvert]; // Obsługuje zarówno pojedyncze zamówienie, jak i tablicę zamówień
+
+  const formattedData = formattedOrders.map((order) =>
   {
     const products = order.products.map((product) => `ID: ${product.productID}, Quantity: ${product.quantity}`).join(' | ');
     return {
@@ -119,28 +124,31 @@ const convertOrdersToCSV = () =>
   });
 
   const json2csvParser = new Parser();
-  const csv = json2csvParser.parse(formattedOrders);
+  const csv = json2csvParser.parse(formattedData);
   return csv;
 };
 
 // Endpoint do pobierania wszystkich zamówień w formacie CSV
 app.get('/orders/csv', (_req, res) =>
 {
-  const csv = convertOrdersToCSV();
+  const csv = convertOrdersToCSV(); // Przekazanie wszystkich zamówień
   res.header('Content-Type', 'text/csv');
   res.attachment('orders.csv');
   res.send(csv);
 });
 
 // Endpoint do pobierania konkretnego zamówienia
-app.get('/orders/:orderID', (req, res) =>
+app.get('/orders/:orderID/csv', (req, res) =>
 {
   const orderID = req.params.orderID;
-  const order = ordersStorage.find((o) => o.orderID === parseInt(orderID));
+  const order = ordersStorage.find((o) => o.orderID === orderID);  // Używaj `orderID` jako string
 
   if (order)
   {
-    res.json(order);
+    const csv = convertOrdersToCSV(order); // Przekazanie pojedynczego zamówienia
+    res.header('Content-Type', 'text/csv');
+    res.attachment(`${orderID}.csv`);
+    res.send(csv);
   } else
   {
     res.status(404).json({ message: 'Order not found' });
@@ -155,10 +163,10 @@ app.listen(PORT, () =>
 });
 
 // Harmonogram codziennego pobierania zamówień
-// schedule.scheduleJob('0 12 * * *', async () =>
-// {
-//   await fetchAllOrders();
-// });
+schedule.scheduleJob('0 12 * * *', async () =>
+{
+  await fetchAllOrders();
+});
 
 // Początkowe pobieranie zamówień
 fetchAllOrders();
