@@ -11,7 +11,7 @@ const API_URL = process.env.REACT_APP_API_URL;
 
 const ordersStorage = [];
 
-// Funkcja pobierajaca zamowienia
+// Funkcja do pobierania zamówień z jednej strony
 const getOrders = async () =>
 {
   let currentPage = 0;
@@ -43,27 +43,27 @@ const getOrders = async () =>
 
       if (data.Results)
       {
-        allOrders.push(...data.Results);
+        allOrders.push(...data.Results); // Dodanie wyników z bieżącej strony
       }
 
       currentPage++;
       totalPages = Math.ceil(data.resultsNumberAll / data.resultsLimit);
     }
 
-    return allOrders;
+    return allOrders; // Zwracamy wszystkie zamówienia
   } catch (err)
   {
-    console.log(`Błąd podczas pobierania zamówień na stronie ${currentPage}:`, err.message);
+    console.error(`Błąd podczas pobierania zamówień na stronie ${currentPage}:`, err.message);
     throw err;
   }
-}
+};
 
-// Funkcja do normalizowania danych
+// Funkcja do przetwarzania pojedynczego zamówienia
 const processOrder = (order) =>
 {
   const orderID = order.orderId;
 
-  const products = order.orderDetails.productsResults.map(product => ({
+  const products = order.orderDetails.productsResults.map((product) => ({
     productID: product.productId,
     quantity: product.productQuantity,
   }));
@@ -85,80 +85,26 @@ const processOrder = (order) =>
   };
 };
 
+// Główna funkcja do pobierania i przetwarzania zamówień
 const fetchAllOrders = async () =>
 {
   try
   {
-    const allOrders = await getOrders();
+    const allOrders = await getOrders(); // Pobranie wszystkich zamówień
 
+    // Przetwarzanie i filtrowanie zamówień
     const processedOrders = allOrders
-      .map(processOrder)
-      .filter(order => order.orderWorth !== '0 PLN');
+      .map(processOrder) // Przetwarzanie zamówień
+      .filter((order) => order.orderWorth !== '0 PLN'); // Filtrowanie zamówień
 
-    ordersStorage.push(...processedOrders);
+    ordersStorage.push(...processedOrders); // Przechowywanie przetworzonych zamówień
 
     console.log(JSON.stringify(ordersStorage, null, 2));
-    console.log(`Otrzymano ${ordersStorage.length} zamówień.`);
+    console.log(`Zebrano ${ordersStorage.length} zamówień.`);
   } catch (err)
   {
     console.error('Wystąpił błąd:', err.message);
   }
 };
 
-// Funkcja do konwersji ordersStorage na CSV
-const convertOrdersToCSV = () =>
-{
-  const formattedOrders = ordersStorage.map((order) =>
-  {
-    const products = order.products.map((product) => `ID: ${product.productID}, Quantity: ${product.quantity}`).join(' | ');
-    return {
-      orderID: order.orderID,
-      products: products,
-      orderWorth: order.orderWorth,
-    };
-  });
-
-  const json2csvParser = new Parser();
-  const csv = json2csvParser.parse(formattedOrders);
-  return csv;
-};
-
-// Endpoint do pobierania wszystkich zamówień w formacie CSV
-app.get('/orders/csv', (_req, res) =>
-{
-  const csv = convertOrdersToCSV();
-  res.header('Content-Type', 'text/csv');
-  res.attachment('orders.csv');
-  res.send(csv);
-});
-
-// Endpoint do pobierania konkretnego zamówienia
-app.get('/orders/:orderID', (req, res) =>
-{
-  const orderID = req.params.orderID;
-  const order = ordersStorage.find((o) => o.orderID === parseInt(orderID));
-
-  if (order)
-  {
-    res.json(order);
-  } else
-  {
-    res.status(404).json({ message: 'Order not found' });
-  }
-});
-
-// Uruchomienie serwera
-const PORT = 3000;
-app.listen(PORT, () =>
-{
-  console.log(`Serwer działa na porcie ${PORT}`);
-});
-
-// Harmonogram codziennego pobierania zamówień
-// schedule.scheduleJob('0 12 * * *', async () =>
-// {
-//   await fetchAllOrders();
-// });
-
-// Początkowe pobieranie zamówień
 fetchAllOrders();
