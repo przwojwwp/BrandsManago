@@ -4,7 +4,7 @@ const app = express();
 const basicAuth = require('express-basic-auth');
 const processOrder = require('./services/orders/processOrder');
 const getOrders = require('./services/orders/getOrders');
-const { setOrdersStorage } = require('./services/ordersStorage');
+const { setOrdersStorage, getOrdersStorage } = require('./services/ordersStorage');
 
 const ordersRoutes = require('./services/csv/routes/ordersRoutes');
 
@@ -44,8 +44,12 @@ const updateOrdersStorage = async () =>
     setOrdersStorage(processedOrders);
 
     console.log(JSON.stringify(processedOrders, null, 2));
-    console.log(`Posiadamy ${processedOrders.length} zapisanych zamówień.`);
-    console.log('Nowe zamówienia:', allOrders.length);
+    console.log(`All fetched orders - ${allOrders.length}`);
+    console.log('------------');
+    console.log(`${processedOrders.length} valid`);
+    console.log('------------');
+    console.log(`All saved: ${getOrdersStorage().length}`);
+    console.log('------------');
     console.log(lastFetchedDate);
   } catch (err)
   {
@@ -66,7 +70,7 @@ app.listen(PORT, () =>
 // Daily order collection schedule at 12 noon
 schedule.scheduleJob('0 12 * * *', async () =>
 {
-  await updateOrdersStorage();
+  await updateOrdersStorage(lastFetchedDate);
 });
 
 // Initial download of orders

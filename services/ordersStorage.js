@@ -2,7 +2,7 @@ let ordersStorage = [];
 
 const setOrdersStorage = (orders) =>
 {
-  ordersStorage = orders;
+  ordersStorage.push(...orders);
 };
 
 const getOrdersStorage = () => ordersStorage;
