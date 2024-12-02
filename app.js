@@ -2,10 +2,11 @@ const schedule = require('node-schedule');
 const express = require('express');
 const app = express();
 const basicAuth = require('express-basic-auth');
-
 const processOrder = require('./services/orders/processOrder');
 const getOrders = require('./services/orders/getOrders');
-const convertOrdersToCSV = require('./services/csv/convertOrdersToCSV');
+const { setOrdersStorage } = require('./services/ordersStorage'); // Import funkcji
+
+const ordersRoutes = require('./services/csv/routes/ordersRoutes');
 
 // Zabezpiecz API poprzez Basic Auth
 app.use(basicAuth({
@@ -17,7 +18,6 @@ app.use(basicAuth({
 }));
 
 let lastFetchedDate = '0';
-const ordersStorage = [];
 
 const updateOrdersStorage = async () =>
 {
@@ -41,10 +41,10 @@ const updateOrdersStorage = async () =>
       .map(processOrder)
       .filter(order => order.orderWorth !== '0 PLN');
 
-    ordersStorage.push(...processedOrders);
+    setOrdersStorage(processedOrders); // Poprawne ustawienie zamówień
 
-    console.log(JSON.stringify(ordersStorage, null, 2));
-    console.log(`Posiadamy ${ordersStorage.length} zapisanych zamówień.`);
+    console.log(JSON.stringify(processedOrders, null, 2));
+    console.log(`Posiadamy ${processedOrders.length} zapisanych zamówień.`);
     console.log('Nowe zamówienia:', allOrders.length);
     console.log(lastFetchedDate);
   } catch (err)
@@ -53,42 +53,8 @@ const updateOrdersStorage = async () =>
   }
 };
 
-// Endpoint do pobierania wszystkich zamówień w formacie CSV
-// http://localhost:3000/orders/csv
-
-// Endpoint do pobierania zamówień w zakresie cen
-// http://localhost:3000/orders/csv?minWorth=<number>&maxWorth=<number>
-app.get('/orders/csv', (req, res) =>
-{
-  const { minWorth, maxWorth } = req.query;
-
-  const minWorthValue = minWorth ? parseFloat(minWorth) : null;
-  const maxWorthValue = maxWorth ? parseFloat(maxWorth) : null;
-
-  const csv = convertOrdersToCSV(ordersStorage, null, minWorthValue, maxWorthValue);
-  res.header('Content-Type', 'text/csv');
-  res.attachment('orders.csv');
-  res.send(csv);
-});
-
-// Endpoint do pobierania konkretnego zamówienia
-// http://localhost:3000/orders/orderID/csv
-app.get('/orders/:orderID/csv', (req, res) =>
-{
-  const orderID = req.params.orderID;
-  const order = ordersStorage.find((o) => o.orderID === orderID);
-
-  if (order)
-  {
-    const csv = convertOrdersToCSV(order); // Przekazanie pojedynczego zamówienia
-    res.header('Content-Type', 'text/csv');
-    res.attachment(`${orderID}.csv`);
-    res.send(csv);
-  } else
-  {
-    res.status(404).json({ message: 'Order not found' });
-  }
-});
+// Używamy zdefiniowanych endpointów z pliku orders.js
+app.use(ordersRoutes);
 
 // Uruchomienie serwera
 const PORT = 3000;
@@ -100,7 +66,7 @@ app.listen(PORT, () =>
 // Harmonogram codziennego pobierania zamówień o 12 w południe
 schedule.scheduleJob('0 12 * * *', async () =>
 {
-  await updateOrdersStorage(lastFetchedDate);
+  await updateOrdersStorage();
 });
 
 // Początkowe pobieranie zamówień
