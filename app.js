@@ -4,11 +4,11 @@ const app = express();
 const basicAuth = require('express-basic-auth');
 const processOrder = require('./services/orders/processOrder');
 const getOrders = require('./services/orders/getOrders');
-const { setOrdersStorage } = require('./services/ordersStorage'); // Import funkcji
+const { setOrdersStorage } = require('./services/ordersStorage');
 
 const ordersRoutes = require('./services/csv/routes/ordersRoutes');
 
-// Zabezpiecz API poprzez Basic Auth
+// Secure API with Basic Auth
 app.use(basicAuth({
   users: {
     'admin': 'password'
@@ -41,7 +41,7 @@ const updateOrdersStorage = async () =>
       .map(processOrder)
       .filter(order => order.orderWorth !== '0 PLN');
 
-    setOrdersStorage(processedOrders); // Poprawne ustawienie zamówień
+    setOrdersStorage(processedOrders);
 
     console.log(JSON.stringify(processedOrders, null, 2));
     console.log(`Posiadamy ${processedOrders.length} zapisanych zamówień.`);
@@ -53,21 +53,21 @@ const updateOrdersStorage = async () =>
   }
 };
 
-// Używamy zdefiniowanych endpointów z pliku orders.js
+// Defined endpoints from the ordersRoutes.js file
 app.use(ordersRoutes);
 
-// Uruchomienie serwera
+// Server start
 const PORT = 3000;
 app.listen(PORT, () =>
 {
   console.log(`Serwer działa na porcie ${PORT}`);
 });
 
-// Harmonogram codziennego pobierania zamówień o 12 w południe
+// Daily order collection schedule at 12 noon
 schedule.scheduleJob('0 12 * * *', async () =>
 {
   await updateOrdersStorage();
 });
 
-// Początkowe pobieranie zamówień
+// Initial download of orders
 updateOrdersStorage();
