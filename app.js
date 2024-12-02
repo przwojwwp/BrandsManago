@@ -3,9 +3,9 @@ const express = require('express');
 const app = express();
 const basicAuth = require('express-basic-auth');
 
-const processOrder = require('./services/processOrder');
-const getOrders = require('./services/getOrders');
-const convertOrdersToCSV = require('./services/convertOrdersToCSV');
+const processOrder = require('./services/orders/processOrder');
+const getOrders = require('./services/orders/getOrders');
+const convertOrdersToCSV = require('./services/csv/convertOrdersToCSV');
 
 // Zabezpiecz API poprzez Basic Auth
 app.use(basicAuth({
