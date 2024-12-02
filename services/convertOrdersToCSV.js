@@ -1,7 +1,7 @@
 const { Parser } = require('json2csv');
 
 // Funkcja do konwersji ordersStorage na CSV
-const convertOrdersToCSV = (orders = null, minWorth = null, maxWorth = null) =>
+const convertOrdersToCSV = (ordersStorage, orders = null, minWorth = null, maxWorth = null) =>
 {
   // Jeśli przekazano tablicę zamówień, użyj jej, w przeciwnym razie użyj globalnego ordersStorage
   let ordersToConvert = orders || ordersStorage;
@@ -11,8 +11,8 @@ const convertOrdersToCSV = (orders = null, minWorth = null, maxWorth = null) =>
   {
     const orderWorth = parseFloat(order.orderWorth.replace(' PLN', ''));
 
-    if (minWorth && orderWorth < minWorth) throw new Error('Invalid minWorth');
-    if (maxWorth && orderWorth > maxWorth) throw new Error('Invalid maxWorth');
+    if (minWorth && orderWorth < minWorth) return false;
+    if (maxWorth && orderWorth > maxWorth) return false;
 
     return true;
   })

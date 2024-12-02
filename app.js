@@ -1,12 +1,11 @@
 const schedule = require('node-schedule');
 const express = require('express');
 const app = express();
-const { Parser } = require('json2csv');
 const basicAuth = require('express-basic-auth');
 
 const processOrder = require('./services/processOrder');
 const getOrders = require('./services/getOrders');
-const { convertOrdersToCSV } = require('./services/convertOrdersToCSV');
+const convertOrdersToCSV = require('./services/convertOrdersToCSV');
 
 // Zabezpiecz API poprzez Basic Auth
 app.use(basicAuth({
@@ -66,7 +65,7 @@ app.get('/orders/csv', (req, res) =>
   const minWorthValue = minWorth ? parseFloat(minWorth) : null;
   const maxWorthValue = maxWorth ? parseFloat(maxWorth) : null;
 
-  const csv = convertOrdersToCSV(null, minWorthValue, maxWorthValue);
+  const csv = convertOrdersToCSV(ordersStorage, null, minWorthValue, maxWorthValue);
   res.header('Content-Type', 'text/csv');
   res.attachment('orders.csv');
   res.send(csv);
