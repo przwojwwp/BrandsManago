@@ -1,5 +1,3 @@
-const axios = require('axios');
-require('dotenv').config();
 const schedule = require('node-schedule');
 const express = require('express');
 const app = express();
@@ -7,9 +5,7 @@ const { Parser } = require('json2csv');
 const basicAuth = require('express-basic-auth');
 
 const processOrder = require('./services/processOrder');
-
-const API_KEY = process.env.REACT_APP_API_KEY;
-const API_URL = process.env.REACT_APP_API_URL;
+const getOrders = require('./services/getOrders');
 
 // Zabezpiecz API poprzez Basic Auth
 app.use(basicAuth({
@@ -23,61 +19,7 @@ app.use(basicAuth({
 let lastFetchedDate = '0';
 const ordersStorage = [];
 
-// Funkcja pobierajaca zamowienia
-const getOrders = async (sinceDate = '0') =>
-{
-  let currentPage = 0;
-  let totalPages = 1;
-  const allOrders = [];
-
-  try
-  {
-    while (currentPage < totalPages)
-    {
-      const options = {
-        method: 'POST',
-        url: API_URL,
-        headers: {
-          accept: 'application/json',
-          'content-type': 'application/json',
-          'X-API-KEY': API_KEY,
-        },
-        data: {
-          params: {
-            resultsPage: currentPage,
-            resultsLimit: 100,
-            ordersRange: {
-              ordersDateRange:
-              {
-                ordersDateType: 'add',
-                ordersDateBegin: sinceDate
-              }
-            }
-          },
-        },
-      };
-
-      const response = await axios.request(options);
-      const data = response.data;
-
-      if (data.Results)
-      {
-        allOrders.push(...data.Results);
-      }
-
-      currentPage++;
-      totalPages = Math.ceil(data.resultsNumberAll / data.resultsLimit);
-    }
-
-    return allOrders;
-  } catch (err)
-  {
-    console.log(`Błąd podczas pobierania zamówień na stronie ${currentPage}:`, err.message);
-    throw err;
-  }
-}
-
-const fetchAllOrders = async () =>
+const updateOrdersStorage  = async () =>
 {
   try
   {
@@ -192,8 +134,8 @@ app.listen(PORT, () =>
 // Harmonogram codziennego pobierania zamówień o 12 w południe
 schedule.scheduleJob('0 12 * * *', async () =>
 {
-  await fetchAllOrders(lastFetchedDate);
+  await updateOrdersStorage (lastFetchedDate);
 });
 
 // Początkowe pobieranie zamówień
-fetchAllOrders();
+updateOrdersStorage ();
