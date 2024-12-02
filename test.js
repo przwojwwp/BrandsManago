@@ -6,18 +6,17 @@ const app = express();
 const { Parser } = require('json2csv');
 const basicAuth = require('express-basic-auth');
 
-const processOrder = require('./services/processOrder');
-
 const API_KEY = process.env.REACT_APP_API_KEY;
 const API_URL = process.env.REACT_APP_API_URL;
 
-// Zabezpiecz API poprzez Basic Auth
+const basicAuthUsers = {
+  admin: 'password',
+}
+
 app.use(basicAuth({
-  users: {
-    'admin': 'password'
-  },
+  users: basicAuthUsers,
   challenge: true,
-  realm: 'Restricted Access'
+  unauthorizedResponse: (req) => 'Nieautoryzowany dostęp'
 }));
 
 let lastFetchedDate = '0';
@@ -76,6 +75,44 @@ const getOrders = async (sinceDate = '0') =>
     throw err;
   }
 }
+
+// Funkcja do normalizowania danych
+const processOrder = (order) =>
+{
+  const orderID = order.orderId;
+
+  const products = order.orderDetails.productsResults.map(product => ({
+    productID: product.productId,
+    quantity: product.productQuantity,
+  }));
+
+
+
+  const deliveryCost = order.orderDetails.payments.orderBaseCurrency.orderDeliveryCost || 0;
+
+  // bezpośrednie wyciągnięcie orderProductsCost daje inna wartość niż podliczenie produktów
+  // const orderWorth = order.orderDetails.payments.orderCurrency.orderProductsCost;
+
+  // calculate orderWorth
+  let orderWorth = order.orderDetails.productsResults.reduce((total, product) =>
+  {
+    const { productOrderPrice, productQuantity } = product;
+    // w wartosciach kluczy orderCurrencyValue dla tej samej waluty wystepuja rozne przeliczniki
+    const currencyRate = order.orderDetails.payments.orderCurrency.orderCurrencyValue;
+    const priceInBaseCurrency = productOrderPrice * currencyRate;
+
+    return total + priceInBaseCurrency * productQuantity;
+  }, 0);
+
+  // Add deliveryCost
+  orderWorth = orderWorth ? orderWorth + deliveryCost : orderWorth;
+
+  return {
+    orderID,
+    products,
+    orderWorth: `${Math.ceil(orderWorth * 100) / 100} PLN`,
+  };
+};
 
 const fetchAllOrders = async () =>
 {
